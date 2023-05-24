@@ -1,0 +1,316 @@
+.tweet-generator {
+  .ant-modal-content {
+    background: #10121A;
+    border-radius: 21px;
+    padding: 20px;
+    border: 1px solid #1C1E25;
+
+    .ant-modal-close {
+      color: #fff;
+      opacity: 0.6;
+
+      &:hover {
+        opacity: 0.8;
+      }
+    }
+  }
+
+  .generator-container {
+    .label {
+      font-size: 20px;
+      line-height: 23px;
+      color: #FFFFFF;
+      opacity: 0.6;
+      margin-bottom: 14px;
+
+      .icon {
+        font-size: 16px;
+        margin-left: 5px;
+      }
+    }
+
+    .tags-row {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+
+      .sponsored-tag {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1.5px solid rgba(255, 255, 255, 0.05);
+        border-radius: 49px;
+        font-size: 22.8499px;
+        line-height: 27px;
+        font-family: Gilroy-Bold;
+        padding: 10px 28px;
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        margin-right: 20px;
+
+        &:hover {
+          cursor: pointer;
+        }
+
+        &.selected {
+          border: 1.5px solid #FFFFFF;
+        }
+
+        .gift-icon {
+          margin-left: 4px;
+          font-size: 20px;
+        }
+
+        .none-icon {
+          display: flex;
+        }
+      }
+    }
+
+    .sponsor-info {
+      font-size: 20px;
+      line-height: 28px;
+      color: #1DA1F2;
+
+      .sponsor-link {
+        font-family: Gilroy-Bold;
+        margin-left: 5px;
+        cursor: pointer;
+
+        &:hover {
+          text-decoration: underline;
+        }
+
+        .icon {
+          margin-left: 4px;
+        }
+      }
+    }
+
+    .sponsor-description {
+      font-size: 20px;
+      line-height: 28px;
+      color: #1DA1F2;
+      margin-bottom: 20px;
+    }
+
+    .gpt-generator-btn {
+      width: fit-content;
+      margin-bottom: 20px;
+    }
+
+    .editor {
+      margin-bottom: 20px;
+
+      textarea {
+        border: 1px solid rgba(255, 255, 255, 0.13);
+        border-radius: 21px;
+        background: none;
+        padding: 20px;
+        resize: none;
+        font-weight: 400;
+        font-size: 20px;
+        line-height: 28px;
+        height: 170px;
+
+        &::placeholder {
+          color: #FFFFFF;
+          opacity: 0.6;
+        }
+      }
+    }
+
+    .sponsor-prompt {
+      font-size: 18px;
+      line-height: 25px;
+      color: #1DA1F2;
+      margin-bottom: 20px;
+
+      .icon {
+        margin-right: 5px;
+      }
+    }
+
+    .loading-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 25px;
+      height: 170px;
+
+      .loading-info {
+        margin-top: 20px;
+        font-size: 20px;
+        line-height: 23px;
+        opacity: 0.6;
+      }
+    }
+  }
+
+  .modal-footer {
+    .action-btn-primary {
+      font-size: 24px;
+      line-height: 28px;
+      padding: 13px;
+
+      .icon {
+        font-size: 18px;
+        margin-right: 14px;
+      }
+    }
+  }
+}
+
+.tweet-generator-drawer {
+  display: flex;
+  flex-direction: column;
+
+  .label {
+    font-size: 20px;
+    line-height: 23px;
+    opacity: 0.6;
+    margin-bottom: 18px;
+
+    .icon {
+      font-size: 16px;
+      margin-left: 5px;
+    }
+  }
+
+  .tags-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+
+    .sponsored-tag {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1.5px solid rgba(255, 255, 255, 0.05);
+      border-radius: 30px;
+      font-size: 14px;
+      line-height: 16px;
+      font-family: Gilroy-Bold;
+      padding: 6px 17px;
+      display: flex;
+      align-items: center;
+      margin-bottom: 18px;
+      margin-right: 10px;
+
+      &:hover {
+        cursor: pointer;
+      }
+
+      &.selected {
+        border: 1.5px solid #FFFFFF;
+      }
+
+      .gift-icon {
+        margin-left: 5px;
+        height: 17px;
+        width: 17px;
+      }
+
+      .none-icon {
+        display: flex;
+      }
+    }
+  }
+
+  .sponsor-info {
+    font-size: 14px;
+    line-height: 20px;
+    color: #1DA1F2;
+
+    .sponsor-link {
+      font-family: Gilroy-Bold;
+      margin-left: 4px;
+      cursor: pointer;
+
+      &:hover {
+        text-decoration: underline;
+      }
+
+      .icon {
+        margin-left: 4px;
+      }
+    }
+  }
+
+  .sponsor-description {
+    font-size: 14px;
+    line-height: 20px;
+    color: #1DA1F2;
+    margin-bottom: 18px;
+  }
+
+  .gpt-generator-btn {
+    width: fit-content;
+    margin-bottom: 18px;
+  }
+
+  .editor {
+    margin-bottom: 18px;
+    
+    textarea {
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      border-radius: 21px;
+      background: none;
+      padding: 16px;
+      resize: none;
+      font-weight: 400;
+      font-size: 14px;
+      line-height: 20px;
+      height: 170px;
+
+      &::placeholder {
+        color: #FFFFFF;
+        opacity: 0.6;
+      }
+    }
+  }
+
+  .sponsor-prompt {
+    color: #1DA1F2;
+    font-size: 12px;
+    line-height: 17px;
+    margin-bottom: 20px;
+    .icon {
+      margin-right: 4px;
+    }
+  }
+
+  .loading-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 170px;
+
+    .loading-info {
+      margin-top: 20px;
+      font-size: 14px;
+      line-height: 20px;
+      opacity: 0.6;
+    }
+  }
+
+  .btn-container {
+    margin-top: 0;
+    margin-bottom: 20px;
+
+    .action-btn-primary {
+      font-size: 24px;
+      line-height: 28px;
+      padding: 14.5px;
+
+      .icon {
+        font-size: 18px;
+        margin-right: 14px;
+        display: flex;
+      }
+    }
+  }
+}
