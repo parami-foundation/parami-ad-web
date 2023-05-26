@@ -307,6 +307,20 @@
         height: 40px;
         margin-top: 46px;
       }
+
+      .bid-nfts-footer {
+        margin-top: 46px;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+
+        .bid-nfts-footer-btn {
+          color: #ffffff;
+          background: #1DA1F2;
+          width: 100%;
+          max-width: 356px;
+        }
+      }
     }
   }
 

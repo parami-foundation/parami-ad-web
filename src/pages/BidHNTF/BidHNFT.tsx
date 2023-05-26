@@ -134,12 +134,12 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
   // }, [])
 
   // upload mock ad data
-  useEffect(() => {
-    uploadIPFS(mockAdData).then(res => {
-      console.log('upload ipfs res', res);
-      setAdMetadataUrl(`https://ipfs.parami.io/ipfs/${res.Hash}`)
-    })
-  }, [])
+  // useEffect(() => {
+  //   uploadIPFS(mockAdData).then(res => {
+  //     console.log('upload ipfs res', res);
+  //     setAdMetadataUrl(`https://ipfs.parami.io/ipfs/${res.Hash}`)
+  //   })
+  // }, [])
 
   useEffect(() => {
     if (bidPreparedEvent && bidPreparedEvent.bidder) {
@@ -178,14 +178,21 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
   };
 
   const onFinish = (values: any) => {
-    message.success('Submit success!');
+    // message.success('Submit success!');
+    console.log('Submit success!', values);
+    uploadIPFS(mockAdData).then(res => {
+      console.log('upload ipfs res', res);
+      setAdMetadataUrl(`https://ipfs.parami.io/ipfs/${res.Hash}`)
+      console.log('bid: handle bid');
+      approve?.();
+    })
   };
 
-  const handelValuesChanged = (changedValues: any) => {
-    if (has(changedValues, 'content')) {
-      setContent(changedValues.content);
-    }
-  };
+  // const handelValuesChanged = (changedValues: any) => {
+  //   if (has(changedValues, 'content')) {
+  //     setContent(changedValues.content);
+  //   }
+  // };
 
   const handleBeforeUpload = (imageType: IMAGE_TYPE) => {
     return async (file: any) => {
@@ -213,10 +220,14 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
     };
   };
 
-  const handleBid = () => {
-    console.log('bid: handle bid');
-    approve?.()
-  };
+  // const handleBid = () => {
+  //   uploadIPFS(mockAdData).then(res => {
+  //     console.log('upload ipfs res', res);
+  //     setAdMetadataUrl(`https://ipfs.parami.io/ipfs/${res.Hash}`)
+  //     console.log('bid: handle bid');
+  //     approve?.();
+  //   })
+  // };
 
   useEffect(() => {
     if (authorizeSlotToSuccess) {
@@ -245,25 +256,30 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
         <div>Bid on HNFT</div>
         <span>Place your advertisement on HNFTs</span>
       </div>
-      <div className='ad-content'>
-        <div className='ad-form'>
-          <div className='title'>Config your Ad</div>
-          <Form
-            form={form}
-            layout='vertical'
-            onFinish={onFinish}
-            autoComplete='off'
-            onValuesChange={handelValuesChanged}
-          >
+      <Form
+        form={form}
+        layout='vertical'
+        onFinish={onFinish}
+        autoComplete='off'
+        initialValues={{ remember: true }}
+      >
+        <div className='ad-content'>
+          <div className='ad-form'>
+            <div className='title'>Config your Ad</div>
             <Form.Item
               name='content'
               label='Content'
               required
-              initialValue={content}
+              rules={[{ required: true, message: 'Please input content!' }]}
             >
               <Input className='ad-form-item' bordered={false} />
             </Form.Item>
-            <Form.Item name='adIcon' label='Ad icon' required>
+            <Form.Item
+              name='adIcon'
+              label='Ad icon'
+              required
+              rules={[{ required: true, message: 'Please upload icon!' }]}
+            >
               <Upload
                 {...uploadProps}
                 fileList={iconUploadFiles}
@@ -276,7 +292,12 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
                 </Button>
               </Upload>
             </Form.Item>
-            <Form.Item name='poster' label='Poster' required>
+            <Form.Item
+              name='poster'
+              label='Poster'
+              required
+              rules={[{ required: true, message: 'Please upload poster!' }]}
+            >
               <Upload
                 {...uploadProps}
                 fileList={posterUploadFiles}
@@ -298,7 +319,12 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
                 <span>+1</span>
               </div>
             </Form.Item> */}
-            <Form.Item name='tag' label='Tag' required>
+            <Form.Item
+              name='tag'
+              label='Tag'
+              required
+              rules={[{ required: true, message: 'Please select tag!' }]}
+            >
               <Select
                 size='large'
                 style={{
@@ -315,7 +341,12 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
                 <Option value={15}>15 DAYS</Option>
               </Select>
             </Form.Item>
-            <Form.Item name='score' label='Score' required>
+            <Form.Item
+              name='score'
+              label='Score'
+              required
+              rules={[{ required: true, message: 'Please input score!' }]}
+            >
               <InputNumber
                 min={1}
                 max={100}
@@ -327,13 +358,19 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
               name='link'
               label='Link'
               required
-              initialValue="www.twitter.com/@324"
+              // initialValue="www.twitter.com/@324"
+              rules={[{ required: true, message: 'Please input link!' }]}
             >
               <Input className='ad-form-item' bordered={false} />
             </Form.Item>
             <Collapse ghost>
               <Panel header='Advanced Settings' key='1'>
-                <Form.Item name='reward-rate' label='Reward Rate' required>
+                <Form.Item
+                  name='reward-rate'
+                  label='Reward Rate'
+                  required
+                  rules={[{ required: true, message: 'Please input reward rate!' }]}
+                >
                   <InputNumber
                     min={0}
                     max={100}
@@ -341,7 +378,12 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
                     bordered={false}
                   />
                 </Form.Item>
-                <Form.Item name='lifetime' label='lifetime' required>
+                <Form.Item
+                  name='lifetime'
+                  label='lifetime'
+                  required
+                  rules={[{ required: true, message: 'Please select lifetime!' }]}
+                >
                   <Select
                     size='large'
                     style={{
@@ -358,7 +400,12 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
                     <Option value={15}>15 DAYS</Option>
                   </Select>
                 </Form.Item>
-                <Form.Item name='payout-base' label='Payout Base' required>
+                <Form.Item
+                  name='payout-base'
+                  label='Payout Base'
+                  required
+                  rules={[{ required: true, message: 'Please input payout base!' }]}
+                >
                   <InputNumber
                     min={0}
                     max={100}
@@ -366,7 +413,12 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
                     bordered={false}
                   />
                 </Form.Item>
-                <Form.Item name='payout-min' label='Payout Min' required>
+                <Form.Item
+                  name='payout-min'
+                  label='Payout Min'
+                  required
+                  rules={[{ required: true, message: 'Please input payout min!' }]}
+                >
                   <InputNumber
                     min={0}
                     max={100}
@@ -374,7 +426,12 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
                     bordered={false}
                   />
                 </Form.Item>
-                <Form.Item name='payout-max' label='Payout Max' required>
+                <Form.Item
+                  name='payout-max'
+                  label='Payout Max'
+                  required
+                  rules={[{ required: true, message: 'Please input payout max!' }]}
+                >
                   <InputNumber
                     min={0}
                     max={100}
@@ -384,67 +441,80 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
                 </Form.Item>
               </Panel>
             </Collapse>
-          </Form>
-        </div>
-        <div className='ad-preview'>
-          <div className='title'>Ad Preview</div>
-          <div className='content'>
-            <div className='header'>
-              <UserAvatar src={iconUploadFiles?.[0]?.url || ''} className='avatar' />
-              <div className='sponsor-desc'>
-                <span>is sponsoring this hNFT. </span>
-                <a className='bidLink' href='#' target='_blank'>
-                  Bid on this ad space
-                </a>
+          </div>
+          <div className='ad-preview'>
+            <div className='title'>Ad Preview</div>
+            <div className='content'>
+              <div className='header'>
+                <UserAvatar src={iconUploadFiles?.[0]?.url || ''} className='avatar' />
+                <div className='sponsor-desc'>
+                  <span>is sponsoring this hNFT. </span>
+                  <a className='bidLink' href='#' target='_blank'>
+                    Bid on this ad space
+                  </a>
+                </div>
               </div>
-            </div>
-            <div className='section'>
-              <div className='arrow'></div>
-              <div className='ad-title' title={content}>
-                {content}
-              </div>
-              <div
-                className='ad-poster'
-              >
-                <img src={posterUploadFiles?.[0]?.url || '/assets/images/rare_wall_bg.png'} referrerPolicy="no-referrer"></img>
+              <div className='section'>
+                <div className='arrow'></div>
+                <div className='ad-title' title={content}>
+                  {content}
+                </div>
+                <div
+                  className='ad-poster'
+                >
+                  <img src={posterUploadFiles?.[0]?.url || '/assets/images/rare_wall_bg.png'} referrerPolicy="no-referrer"></img>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-      <div className='ad-footer'>
-        <div className='title'>Bid your price</div>
-        <div className='bid-nfts'>
-          <div className='bid-nfts-title'>Nfts</div>
-          <div className='bid-nfts-content'>
-            <div className='bid-nfts-content-header'>
-              <div className='bid-nfts-content-header-item'>
-                HNFT
+        <div className='ad-footer'>
+          <div className='title'>Bid your price</div>
+          <div className='bid-nfts'>
+            <div className='bid-nfts-title'>Nfts</div>
+            <div className='bid-nfts-content'>
+              <div className='bid-nfts-content-header'>
+                <div className='bid-nfts-content-header-item'>
+                  HNFT
+                </div>
+                <div className='bid-nfts-content-header-item'>
+                  Min Price
+                </div>
+                <div className='bid-nfts-content-header-item'>
+                  Offer a price
+                </div>
               </div>
-              <div className='bid-nfts-content-header-item'>
-                Min Price
-              </div>
-              <div className='bid-nfts-content-header-item'>
-                Offer a price
+              <div className='bid-nfts-content-body'>
+                <div className='bid-nfts-content-body-item'>
+                  XPC
+                </div>
+                <div className='bid-nfts-content-body-item'>
+                  0.1
+                </div>
+                <div className='bid-nfts-content-body-item'>
+                  <Form.Item
+                    name='bid-price'
+                    required
+                    rules={[{ required: true, message: 'Please input price!' }]}
+                  >
+                    <InputNumber
+                      min={0}
+                      max={1000000}
+                      className='ad-form-item'
+                      bordered={false}
+                    />
+                  </Form.Item>
+                </div>
               </div>
             </div>
-            <div className='bid-nfts-content-body'>
-              <div className='bid-nfts-content-body-item'>
-                XPC
-              </div>
-              <div className='bid-nfts-content-body-item'>
-                0.1
-              </div>
-              <div className='bid-nfts-content-body-item'>
-                <Input className='bid-nfts-body-input' bordered={false} />
-              </div>
+            <div className='bid-nfts-footer'>
+              <Button type="primary" shape="round" htmlType="submit" className='bid-nfts-footer-btn'>
+                Bid
+              </Button>
             </div>
           </div>
-          <div className='action-btn-primary active bid-button' onClick={() => {
-            handleBid();
-          }}>Bid</div>
         </div>
-      </div>
+      </Form>
     </div>
   );
 };
