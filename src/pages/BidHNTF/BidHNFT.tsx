@@ -10,7 +10,6 @@ import {
   Select,
 } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
-import has from 'lodash/has';
 import { compressImageFile } from '../../utils/upload.util';
 import type { UploadFile } from 'antd/es/upload/interface';
 import UserAvatar from '../../components/UserAvatar/UserAvatar';
@@ -28,7 +27,7 @@ import { useImAccount } from '../../hooks/useImAccount';
 import { useCommitBid } from '../../hooks/useCommitBid';
 import { useCurBid } from '../../hooks/useCurrentBid';
 import { uploadIPFS } from '../../services/ipfs.service';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 
 const { Panel } = Collapse;
 const { Option } = Select;
@@ -47,20 +46,20 @@ export interface UserInstruction {
   link?: string;
 }
 
-const defaultInstruction: UserInstruction = {
-  text: 'Follow Parami on Twitter',
-  tag: 'Twitter',
-  score: 1,
-  link: 'https://twitter.com/intent/follow?screen_name=ParamiProtocol',
-};
+// const defaultInstruction: UserInstruction = {
+//   text: 'Follow Parami on Twitter',
+//   tag: 'Twitter',
+//   score: 1,
+//   link: 'https://twitter.com/intent/follow?screen_name=ParamiProtocol',
+// };
 
-interface AdMeta {
-  icon?: string;
-  poster?: string;
-  title?: string;
-  tag?: string;
-  url?: string;
-}
+// interface AdMeta {
+//   icon?: string;
+//   poster?: string;
+//   title?: string;
+//   tag?: string;
+//   url?: string;
+// }
 
 const mockAdData = {
   icon: 'https://pbs.twimg.com/profile_images/1611305582367215616/4W9XpGpU.jpg',
@@ -116,7 +115,7 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
     if (bidWithSig && commitBidReady) {
       commitBid?.();
     }
-  }, [bidWithSig, commitBidReady])
+  }, [bidWithSig, commitBid, commitBidReady])
 
   useEffect(() => {
     if (commitBidSuccess) {
@@ -150,7 +149,7 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
         setBidWithSig(bidWithSig);
       })
     }
-  }, [bidPreparedEvent]);
+  }, [bidPreparedEvent, hnft.tokenId, imAccount?.id]);
 
   useEffect(() => {
     console.log('currentSlotManager', currentSlotManager)
@@ -234,7 +233,7 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
       console.log('bid: pre bid after authorize');
       preBid?.();
     }
-  }, [authorizeSlotToSuccess])
+  }, [authorizeSlotToSuccess, preBid])
 
   useEffect(() => {
     if (approveSuccess && preBidReady) {
@@ -245,7 +244,7 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
         authorizeSlotTo?.();
       }
     }
-  }, [approveSuccess, preBidReady])
+  }, [approveSuccess, authorizeSlotTo, currentSlotManager, preBid, preBidReady])
 
   return (
     <div className={styles.bidAdContainer}>
