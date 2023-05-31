@@ -10,29 +10,36 @@ import {
   Select,
 } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
-import { compressImageFile } from '../../utils/upload.util';
+import { compressImageFile, uploadProps } from '../../utils/upload.util';
 import type { UploadFile } from 'antd/es/upload/interface';
+import { useSearchParams } from 'react-router-dom';
 import UserAvatar from '../../components/UserAvatar/UserAvatar';
 import styles from './BidHNFT.module.scss';
 import { useApproveAD3 } from '../../hooks/useApproveAD3';
-import { AuctionContractAddress, EIP5489ForInfluenceMiningContractAddress } from '../../models/parami';
-import { inputFloatStringToAmount } from '../../utils/format.util';
+import { useAD3Balance } from '../../hooks/useAD3Balance';
+import {
+  AuctionContractAddress,
+  EIP5489ForInfluenceMiningContractAddress,
+} from '../../models/parami';
+import {
+  inputFloatStringToAmount,
+  BigIntToFloatString,
+  deleteComma,
+} from '../../utils/format.util';
 import { usePreBid } from '../../hooks/usePreBid';
+import { useCurBid } from '../../hooks/useCurrentBid';
 import { useAuctionEvent } from '../../hooks/useAuctionEvent';
 import { useAuthorizeSlotTo } from '../../hooks/useAuthorizeSlotTo';
-import { useApproveHnft } from '../../hooks/useApproveHnft';
-import { useAccount } from 'wagmi';
 import { BidWithSignature, createBid } from '../../services/bid.service';
 import { useImAccount } from '../../hooks/useImAccount';
 import { useCommitBid } from '../../hooks/useCommitBid';
-import { useCurBid } from '../../hooks/useCurrentBid';
 import { uploadIPFS } from '../../services/ipfs.service';
-import { useSearchParams } from 'react-router-dom';
+import { useHNFT } from '../../hooks/useHNFT';
 
 const { Panel } = Collapse;
 const { Option } = Select;
 
-interface BidHNFTProps { }
+interface BidHNFTProps {}
 
 export enum IMAGE_TYPE {
   ICON = 'icon',
@@ -46,152 +53,154 @@ export interface UserInstruction {
   link?: string;
 }
 
-// const defaultInstruction: UserInstruction = {
-//   text: 'Follow Parami on Twitter',
-//   tag: 'Twitter',
-//   score: 1,
-//   link: 'https://twitter.com/intent/follow?screen_name=ParamiProtocol',
-// };
-
-// interface AdMeta {
-//   icon?: string;
-//   poster?: string;
-//   title?: string;
-//   tag?: string;
-//   url?: string;
-// }
-
 const mockAdData = {
   icon: 'https://pbs.twimg.com/profile_images/1611305582367215616/4W9XpGpU.jpg',
   poster: 'https://pbs.twimg.com/media/FqlTSTOWYAA7yKN?format=jpg&name=small',
   title: 'Tweeting is Mining!',
   tag: 'twitter',
-  url: 'https://twitter.com/ParamiProtocol'
-}
+  url: 'https://twitter.com/ParamiProtocol',
+};
 
-// const adMetadataUrl = 'https://ipfs.parami.io/ipfs/QmY3ttSmNBbcKPit8mJ1FLatcDDeNDhmkkYU9TnCEJSsjZ';
+// todo: get form auction.sol, current this is private
+const MIN_DEPOIST_FOR_PRE_BID = 10;
 
 const BidHNFT: React.FC<BidHNFTProps> = (props) => {
-  let [params] = useSearchParams();
-  // const hnftAddress = param.get('hnftAddress');
-  // const tokenId = param.get('tokenId');
-  // console.info('param', hnftAddress, tokenId);
   const [form] = Form.useForm();
+  const content = Form.useWatch('title', form);
   const { imAccount } = useImAccount();
-  const { address } = useAccount();
-  const [content, setContent] = useState<string>('View Ads. Get Paid.');
+  const [params] = useSearchParams();
+  const tokenId = Number(params.get('tokenId') || '');
+  const hnftAddress = params.get('hnftAddress') || '';
+
   const [adMetadataUrl, setAdMetadataUrl] = useState<string>();
   const [iconUploadFiles, setIconUploadFiles] = useState<UploadFile[]>([]);
   const [posterUploadFiles, setPosterUploadFiles] = useState<UploadFile[]>([]);
-  const { approve, isSuccess: approveSuccess } = useApproveAD3(AuctionContractAddress, inputFloatStringToAmount('20')); // approve amount = min_deposite_amount + new_bid_price
-  const [hnft, setHnft] = useState<any>({ address: EIP5489ForInfluenceMiningContractAddress, tokenId: '140' }); // todo: get hnft from url params
-  const { authorizeSlotTo, isSuccess: authorizeSlotToSuccess, currentSlotManager } = useAuthorizeSlotTo(hnft.tokenId, AuctionContractAddress);
-  const { preBid, isSuccess: preBidSuccess, prepareError: preBidPrepareError } = usePreBid(hnft.address, hnft.tokenId);
-  const preBidReady = !!preBid;
-  const curBid = useCurBid(hnft.address, hnft.tokenId);
-  const [bidPreparedEvent, setBidPreparedEvent] = useState<any>();
-  const { unwatch } = useAuctionEvent('BidPrepared', (hNFTContractAddr: string, curBidId: string, preBidId: string, bidder: string) => {
-    setBidPreparedEvent({
-      bidder,
-      curBidId,
-      preBidId
-    })
-  });
+  const [bidLoading, setBidLoading] = useState<boolean>(false);
 
-  const { approve: hnftApprove } = useApproveHnft(AuctionContractAddress, hnft.tokenId);
+  const currentPrice = Number(useCurBid(hnftAddress, tokenId).amount);
+  const minPrice = Math.max(currentPrice * 1.2, 1);
+
+  const hnft = useHNFT(hnftAddress);
+  const nftBalance = useAD3Balance(hnftAddress);
+  const { approve, isSuccess: approveSuccess } = useApproveAD3(
+    AuctionContractAddress,
+    inputFloatStringToAmount('20')
+  );
+  // const {
+  //   authorizeSlotTo,
+  //   isSuccess: authorizeSlotToSuccess,
+  //   currentSlotManager,
+  // } = useAuthorizeSlotTo(tokenId, AuctionContractAddress);
+  const {
+    preBid,
+    isSuccess: preBidSuccess,
+    prepareError: preBidPrepareError,
+  } = usePreBid(hnftAddress, tokenId);
+  // const preBidReady = !!preBid;
+  const [bidPreparedEvent, setBidPreparedEvent] = useState<any>();
+  const { unwatch } = useAuctionEvent(
+    'BidPrepared',
+    (
+      hNFTContractAddr: string,
+      curBidId: string,
+      preBidId: string,
+      bidder: string
+    ) => {
+      console.log(bidder, curBidId, '---curBidId----');
+      setBidPreparedEvent({
+        bidder,
+        curBidId,
+        preBidId,
+      });
+    }
+  );
   const [bidWithSig, setBidWithSig] = useState<BidWithSignature>();
-  const { commitBid, isSuccess: commitBidSuccess } = useCommitBid(hnft.tokenId, hnft.address, inputFloatStringToAmount('10'), adMetadataUrl, bidWithSig?.sig, bidWithSig?.prev_bid_id, bidWithSig?.id, bidWithSig?.last_bid_remain);
+  const { commitBid, isSuccess: commitBidSuccess } = useCommitBid(
+    tokenId,
+    hnftAddress,
+    inputFloatStringToAmount('10'),
+    adMetadataUrl,
+    bidWithSig?.sig,
+    bidWithSig?.prev_bid_id,
+    bidWithSig?.id,
+    bidWithSig?.last_bid_remain
+  );
   const commitBidReady = !!commitBid;
 
-  useEffect(() => {
-    if (params && params.get('hnftAddress') && params.get('tokenId')) {
-      // setTweetGeneratorModal(true);
-    } else {
-      message.error('Invalid URL');
-    }
-  }, [params])
-
-  useEffect(() => {
-    if (bidWithSig && commitBidReady) {
-      commitBid?.();
-    }
-  }, [bidWithSig, commitBid, commitBidReady])
-
-  useEffect(() => {
-    if (commitBidSuccess) {
-      // todo: refresh and clear state
-      console.log('commit bid success!!');
-    }
-  }, [commitBidSuccess])
-
-  // direct bid for testing
+  // todo: check if kol is authorized bid
   // useEffect(() => {
-  //   createBid(imAccount?.id ?? '26', 1, EIP5489ForInfluenceMiningContractAddress, hnft.tokenId, inputFloatStringToAmount('10')).then((bidWithSig) => {
-  //     console.log('create bid got sig', bidWithSig);
-  //     setBidWithSig(bidWithSig);
-  //   })
-  // }, [])
+  //   console.log('currentSlotManager', currentSlotManager);
+  // }, [currentSlotManager]);
 
-  // upload mock ad data
+  // // if the authorizeSlotSuccess then pledge some of ad3s
   // useEffect(() => {
-  //   uploadIPFS(mockAdData).then(res => {
-  //     console.log('upload ipfs res', res);
-  //     setAdMetadataUrl(`https://ipfs.parami.io/ipfs/${res.Hash}`)
-  //   })
-  // }, [])
+  //   if (authorizeSlotToSuccess) {
+  //     console.log('bid: pre bid after authorize');
+  //     preBid?.();
+  //   }
+  // }, [authorizeSlotToSuccess, preBid]);
+
+  useEffect(() => {
+    if (approveSuccess) {
+      console.log('bid: pre bid direct');
+      preBid?.();
+    }
+  }, [approveSuccess, preBid]);
+
 
   useEffect(() => {
     if (bidPreparedEvent && bidPreparedEvent.bidder) {
       // todo: create adMeta
       console.log('bid prepare event done. create bid now...');
-      createBid(imAccount?.id ?? '26', 1, EIP5489ForInfluenceMiningContractAddress, hnft.tokenId, inputFloatStringToAmount('10')).then((bidWithSig) => {
+      createBid(
+        imAccount?.id ?? '26',
+        1,
+        EIP5489ForInfluenceMiningContractAddress,
+        tokenId,
+        inputFloatStringToAmount('10')
+      ).then((bidWithSig) => {
         console.log('create bid got sig', bidWithSig);
         setBidWithSig(bidWithSig);
-      })
+      });
     }
-  }, [bidPreparedEvent, hnft.tokenId, imAccount?.id]);
+  }, [bidPreparedEvent, tokenId, imAccount?.id]);
 
   useEffect(() => {
-    console.log('currentSlotManager', currentSlotManager)
-  }, [currentSlotManager])
+    if (bidWithSig && commitBidReady) {
+      console.log(33333);
+      commitBid?.();
+    }
+  }, [bidWithSig, commitBid, commitBidReady]);
+
+  // useEffect(() => {
+  //   if (preBidPrepareError) {
+  //     console.log('prebid prepare error', preBidPrepareError);
+  //   }
+  // }, [preBidPrepareError]);
 
   useEffect(() => {
-    if (preBidPrepareError) {
-      console.log('prebid prepare error', preBidPrepareError)
+    if (commitBidSuccess) {
+      // todo: refresh and clear state
+      setBidLoading(false);
+      message.success('commit bid success!!');
     }
-  }, [preBidPrepareError])
-
-  const uploadProps = {
-    name: 'file',
-    // crossOrigin: 'anonymous',
-    headers: {
-      // authorization: 'authorization-text',
-      // origin: 'gptminer.io',
-      // 'Referrer-Policy': 'no-referrer'
-    },
-    action: 'https://ipfs.parami.io/api/v0/add?stream-channels=true',
-    withCredentials: false,
-    showUploadList: { showPreviewIcon: false },
-    multiple: false,
-    maxCount: 1,
-  };
+  }, [commitBidSuccess]);
 
   const onFinish = (values: any) => {
-    // message.success('Submit success!');
-    console.log('Submit success!', values);
-    uploadIPFS(mockAdData).then(res => {
-      console.log('upload ipfs res', res);
-      setAdMetadataUrl(`https://ipfs.parami.io/ipfs/${res.Hash}`)
-      console.log('bid: handle bid');
-      approve?.();
-    })
+    form.validateFields().then(async (values: any) => {
+      setBidLoading(true);
+      const { bid_price } = values;
+      uploadIPFS(mockAdData).then((res) => {
+        console.log('upload ipfs res', res);
+        // success && blance >= approve amount = min_deposite_amount + new_bid_price
+        if (res && Number(nftBalance) > MIN_DEPOIST_FOR_PRE_BID + bid_price) {
+          approve?.();
+        }
+        setAdMetadataUrl(`https://ipfs.parami.io/ipfs/${res.Hash}`);
+        console.log('bid: handle bid');
+      });
+    });
   };
-
-  // const handelValuesChanged = (changedValues: any) => {
-  //   if (has(changedValues, 'content')) {
-  //     setContent(changedValues.content);
-  //   }
-  // };
 
   const handleBeforeUpload = (imageType: IMAGE_TYPE) => {
     return async (file: any) => {
@@ -202,8 +211,6 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
   const handleUploadOnChange = (imageType: IMAGE_TYPE) => {
     return (info: any) => {
       const { fileList } = info;
-      console.log(info, '---info----');
-
       if (info.file.status === 'done') {
         const ipfsHash = info.file.response.Hash;
         const imageUrl = 'https://ipfs.parami.io/ipfs/' + ipfsHash;
@@ -219,38 +226,13 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
     };
   };
 
-  // const handleBid = () => {
-  //   uploadIPFS(mockAdData).then(res => {
-  //     console.log('upload ipfs res', res);
-  //     setAdMetadataUrl(`https://ipfs.parami.io/ipfs/${res.Hash}`)
-  //     console.log('bid: handle bid');
-  //     approve?.();
-  //   })
-  // };
-
-  useEffect(() => {
-    if (authorizeSlotToSuccess) {
-      console.log('bid: pre bid after authorize');
-      preBid?.();
-    }
-  }, [authorizeSlotToSuccess, preBid])
-
-  useEffect(() => {
-    if (approveSuccess && preBidReady) {
-      if (currentSlotManager && currentSlotManager.toLowerCase() === AuctionContractAddress.toLowerCase()) {
-        console.log('bid: pre bid direct');
-        preBid?.();
-      } else {
-        authorizeSlotTo?.();
-      }
-    }
-  }, [approveSuccess, authorizeSlotTo, currentSlotManager, preBid, preBidReady])
+  if (!hnftAddress || !tokenId) {
+    message.error('Invalid URL');
+    return null;
+  }
 
   return (
     <div className={styles.bidAdContainer}>
-      {/* <div className='action-btn-primary active' onClick={() => {
-        hnftApprove?.();
-      }}>Approve</div> */}
       <div className='ad-header'>
         <div>Bid on HNFT</div>
         <span>Place your advertisement on HNFTs</span>
@@ -258,7 +240,6 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
       <Form
         form={form}
         layout='vertical'
-        onFinish={onFinish}
         autoComplete='off'
         initialValues={{ remember: true }}
       >
@@ -266,7 +247,7 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
           <div className='ad-form'>
             <div className='title'>Config your Ad</div>
             <Form.Item
-              name='content'
+              name='title'
               label='Content'
               required
               rules={[{ required: true, message: 'Please input content!' }]}
@@ -274,7 +255,7 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
               <Input className='ad-form-item' bordered={false} />
             </Form.Item>
             <Form.Item
-              name='adIcon'
+              name='icon'
               label='Ad icon'
               required
               rules={[{ required: true, message: 'Please upload icon!' }]}
@@ -309,15 +290,6 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
                 </Button>
               </Upload>
             </Form.Item>
-            {/* <Form.Item name='instruction' label='Instruction' required>
-              <div className='instruction'>
-                <span>{defaultInstruction.text}</span>
-                <a className='follow-twitter' href={defaultInstruction.link}>
-                  {defaultInstruction.tag}
-                </a>
-                <span>+1</span>
-              </div>
-            </Form.Item> */}
             <Form.Item
               name='tag'
               label='Tag'
@@ -329,15 +301,12 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
                 style={{
                   width: '100%',
                 }}
-                defaultValue={1}
                 popupClassName={styles.lifetimePopup}
-                value={1}
                 className='ad-form-item'
               >
-                <Option value={1}>1 DAY</Option>
-                <Option value={3}>3 DAYS</Option>
-                <Option value={7}>7 DAYS</Option>
-                <Option value={15}>15 DAYS</Option>
+                <Option value='nft'>NFT</Option>
+                <Option value='twitter'>Twitter</Option>
+                <Option value='deFi'>DeFi</Option>
               </Select>
             </Form.Item>
             <Form.Item
@@ -354,10 +323,9 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
               />
             </Form.Item>
             <Form.Item
-              name='link'
+              name='url'
               label='Link'
               required
-              // initialValue="www.twitter.com/@324"
               rules={[{ required: true, message: 'Please input link!' }]}
             >
               <Input className='ad-form-item' bordered={false} />
@@ -365,10 +333,12 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
             <Collapse ghost>
               <Panel header='Advanced Settings' key='1'>
                 <Form.Item
-                  name='reward-rate'
+                  name='reward_rate_in_100_percent'
                   label='Reward Rate'
                   required
-                  rules={[{ required: true, message: 'Please input reward rate!' }]}
+                  rules={[
+                    { required: true, message: 'Please input reward rate!' },
+                  ]}
                 >
                   <InputNumber
                     min={0}
@@ -381,16 +351,16 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
                   name='lifetime'
                   label='lifetime'
                   required
-                  rules={[{ required: true, message: 'Please select lifetime!' }]}
+                  rules={[
+                    { required: true, message: 'Please select lifetime!' },
+                  ]}
                 >
                   <Select
                     size='large'
                     style={{
                       width: '100%',
                     }}
-                    defaultValue={1}
                     popupClassName={styles.lifetimePopup}
-                    value={1}
                     className='ad-form-item'
                   >
                     <Option value={1}>1 DAY</Option>
@@ -400,10 +370,12 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
                   </Select>
                 </Form.Item>
                 <Form.Item
-                  name='payout-base'
+                  name='payout_base'
                   label='Payout Base'
                   required
-                  rules={[{ required: true, message: 'Please input payout base!' }]}
+                  rules={[
+                    { required: true, message: 'Please input payout base!' },
+                  ]}
                 >
                   <InputNumber
                     min={0}
@@ -413,10 +385,12 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
                   />
                 </Form.Item>
                 <Form.Item
-                  name='payout-min'
+                  name='payout_min'
                   label='Payout Min'
                   required
-                  rules={[{ required: true, message: 'Please input payout min!' }]}
+                  rules={[
+                    { required: true, message: 'Please input payout min!' },
+                  ]}
                 >
                   <InputNumber
                     min={0}
@@ -426,10 +400,12 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
                   />
                 </Form.Item>
                 <Form.Item
-                  name='payout-max'
+                  name='payout_max'
                   label='Payout Max'
                   required
-                  rules={[{ required: true, message: 'Please input payout max!' }]}
+                  rules={[
+                    { required: true, message: 'Please input payout max!' },
+                  ]}
                 >
                   <InputNumber
                     min={0}
@@ -445,7 +421,10 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
             <div className='title'>Ad Preview</div>
             <div className='content'>
               <div className='header'>
-                <UserAvatar src={iconUploadFiles?.[0]?.url || ''} className='avatar' />
+                <UserAvatar
+                  src={iconUploadFiles?.[0]?.url || ''}
+                  className='avatar'
+                />
                 <div className='sponsor-desc'>
                   <span>is sponsoring this hNFT. </span>
                   <a className='bidLink' href='#' target='_blank'>
@@ -458,10 +437,15 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
                 <div className='ad-title' title={content}>
                   {content}
                 </div>
-                <div
-                  className='ad-poster'
-                >
-                  <img src={posterUploadFiles?.[0]?.url || '/assets/images/rare_wall_bg.png'} referrerPolicy="no-referrer"></img>
+                <div className='ad-poster'>
+                  <img
+                    src={
+                      posterUploadFiles?.[0]?.url ||
+                      '/assets/images/rare_wall_bg.png'
+                    }
+                    referrerPolicy='no-referrer'
+                    alt=''
+                  ></img>
                 </div>
               </div>
             </div>
@@ -473,33 +457,25 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
             <div className='bid-nfts-title'>Nfts</div>
             <div className='bid-nfts-content'>
               <div className='bid-nfts-content-header'>
-                <div className='bid-nfts-content-header-item'>
-                  HNFT
-                </div>
-                <div className='bid-nfts-content-header-item'>
-                  Min Price
-                </div>
+                <div className='bid-nfts-content-header-item'>HNFT</div>
+                <div className='bid-nfts-content-header-item'>Min Price</div>
                 <div className='bid-nfts-content-header-item'>
                   Offer a price
                 </div>
               </div>
               <div className='bid-nfts-content-body'>
-                <div className='bid-nfts-content-body-item'>
-                  XPC
-                </div>
-                <div className='bid-nfts-content-body-item'>
-                  0.1
-                </div>
+                <div className='bid-nfts-content-body-item'>{hnft?.name}</div>
+                <div className='bid-nfts-content-body-item'>{currentPrice}</div>
                 <div className='bid-nfts-content-body-item'>
                   <Form.Item
-                    name='bid-price'
+                    name='bid_price'
                     required
                     rules={[{ required: true, message: 'Please input price!' }]}
                   >
                     <InputNumber
-                      min={0}
+                      min={minPrice}
                       max={1000000}
-                      className='ad-form-item'
+                      className='bid-nfts-body-input'
                       bordered={false}
                     />
                   </Form.Item>
@@ -507,7 +483,14 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
               </div>
             </div>
             <div className='bid-nfts-footer'>
-              <Button type="primary" shape="round" htmlType="submit" className='bid-nfts-footer-btn'>
+              <Button
+                type='primary'
+                shape='round'
+                htmlType='submit'
+                className='bid-nfts-footer-btn'
+                onClick={onFinish}
+                loading={bidLoading}
+              >
                 Bid
               </Button>
             </div>

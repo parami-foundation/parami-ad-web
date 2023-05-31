@@ -18,45 +18,65 @@ export interface HNFT {
   refetch: () => void;
 }
 
-export const useHNFT = () => {
-  const { address } = useAccount();
+export const useHNFT = (hnftAddress?: string) => {
+  const { address: account } = useAccount();
+  const address = hnftAddress || account;
 
-  const { data: nftBalance, refetch: refetchBalance } = useContractRead<unknown[], string, BigNumber>({
+  const { data: nftBalance, refetch: refetchBalance } = useContractRead<
+    unknown[],
+    string,
+    BigNumber
+  >({
     address: EIP5489ForInfluenceMiningContractAddress,
     abi: EIP5489ForInfluenceMining.abi,
     functionName: 'balanceOf',
     args: [address],
   });
 
-  const { data: tokenId, refetch: refetchTokenId } = useContractRead<unknown[], string, BigNumber>({
+  const { data: tokenId, refetch: refetchTokenId } = useContractRead<
+    unknown[],
+    string,
+    BigNumber
+  >({
     address: EIP5489ForInfluenceMiningContractAddress,
     abi: EIP5489ForInfluenceMining.abi,
     functionName: 'tokenOfOwnerByIndex',
     args: [address, 0],
   });
 
-  const { data: tokenUri, refetch: refetchTokenUri } = useContractRead<unknown[], string, string>({
+  const { data: tokenUri, refetch: refetchTokenUri } = useContractRead<
+    unknown[],
+    string,
+    string
+  >({
     address: EIP5489ForInfluenceMiningContractAddress,
     abi: EIP5489ForInfluenceMining.abi,
     functionName: 'tokenURI',
     args: [tokenId],
   });
 
-  const { data: level, refetch: refetchLevel } = useContractRead<unknown[], string, string>({
+  const { data: level, refetch: refetchLevel } = useContractRead<
+    unknown[],
+    string,
+    string
+  >({
     address: EIP5489ForInfluenceMiningContractAddress,
     abi: EIP5489ForInfluenceMining.abi,
     functionName: 'token2Level',
     args: [tokenId],
   });
 
-  const { data: onWhitelist, refetch: refetchWhitelistStatus } = useContractRead<unknown[], string, BigNumber>({
-    address: EIP5489ForInfluenceMiningContractAddress,
-    abi: EIP5489ForInfluenceMining.abi,
-    functionName: 'kolWhiteList',
-    args: [address],
-  });
+  const { data: onWhitelist, refetch: refetchWhitelistStatus } =
+    useContractRead<unknown[], string, BigNumber>({
+      address: EIP5489ForInfluenceMiningContractAddress,
+      abi: EIP5489ForInfluenceMining.abi,
+      functionName: 'kolWhiteList',
+      args: [address],
+    });
 
-  const token = tokenUri ? JSON.parse(Buffer.from(tokenUri.slice(29), 'base64').toString()) : {}
+  const token = tokenUri
+    ? JSON.parse(Buffer.from(tokenUri.slice(29), 'base64').toString())
+    : {};
 
   const levelString = level?.toString() ?? '0';
 
@@ -75,8 +95,8 @@ export const useHNFT = () => {
       refetchTokenUri();
       refetchLevel();
       refetchWhitelistStatus();
-    }
+    },
   };
 
   return hnft;
-}
+};

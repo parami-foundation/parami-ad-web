@@ -23,7 +23,7 @@ function MyNFT({ }: MyNFTProps) {
     const navigate = useNavigate();
 
     useEffect(() => {
-        console.log('my hnft', hnft);
+        // console.log('my hnft', hnft);
     }, [hnft])
 
     useEffect(() => {
@@ -42,49 +42,97 @@ function MyNFT({ }: MyNFTProps) {
         }
     }, [isConnected])
 
-    return <>
-        {(location.pathname !== '/' && location.pathname !== '/mint') && <>
-            <div className={`my-nft-container ${location.pathname === '/leaderboard' ? 'high-position' : ''}`}>
-                {!isConnected && <>
-                    <div className='no-connect' onClick={() => {
-                        setConnectWalletModal(true);
-                    }}>
+    return (
+      <>
+        {location.pathname !== '/' && location.pathname !== '/mint' && (
+          <>
+            <div
+              className={`my-nft-container ${
+                location.pathname === '/leaderboard' ? 'high-position' : ''
+              }`}
+            >
+              {!isConnected && (
+                <>
+                  <div
+                    className='no-connect'
+                    onClick={() => {
+                      setConnectWalletModal(true);
+                    }}
+                  >
+                    <span className='text'>
+                      {isMobile
+                        ? 'Connect Wallet'
+                        : 'Connect wallet to view NFT'}
+                    </span>
+                  </div>
+                </>
+              )}
+
+              {isConnected && (
+                <>
+                  {!hnft.balance && (
+                    <>
+                      <div
+                        className='no-hnft'
+                        onClick={() => {
+                          navigate('/mint');
+                        }}
+                      >
                         <span className='text'>
-                            {isMobile ? 'Connect Wallet' : 'Connect wallet to view NFT'}
+                          {isMobile ? 'Mint HNFT' : 'Mint My HNFT'}
                         </span>
-                    </div>
-                </>}
+                      </div>
+                    </>
+                  )}
 
-                {isConnected && <>
-                    {!hnft.balance && <>
-                        <div className='no-hnft' onClick={() => {
-                            navigate('/mint');
-                        }}>
-                            <span className='text'>
-                                {isMobile ? 'Mint HNFT' : 'Mint My HNFT'}
-                            </span>
-                        </div>
-                    </>}
+                  {!!hnft.balance && imAccount && (
+                    <>
+                      <div className='nft-container'>
+                        <BillboardNftImage
+                          imageUrl={imAccount.twitterProfileImageUri}
+                          level={Number(hnft.level)}
+                          showTag={!isMobile}
+                        ></BillboardNftImage>
+                      </div>
 
-                    {!!hnft.balance && imAccount && <>
-                        <div className='nft-container'>
-                            <BillboardNftImage imageUrl={imAccount.twitterProfileImageUri} level={Number(hnft.level)} showTag={!isMobile}></BillboardNftImage>
-                        </div>
-
-                        {!isMobile && <>
-                            <div className='action-btn-primary active' onClick={() => {
+                      {!isMobile && (
+                        <>
+                          {hnft.levelName === 'Legendary' && (
+                            <div className='action-btn-primary active'>
+                              Already superlativ
+                            </div>
+                          )}
+                          {hnft.levelName !== 'Legendary' && (
+                            <div
+                              className='action-btn-primary active'
+                              onClick={() => {
                                 navigate('/mint');
-                            }}>Upgrade HNFT</div>
-                        </>}
-                    </>}
-                </>}
+                              }}
+                            >
+                              Upgrade HNFT
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </>
+                  )}
+                </>
+              )}
             </div>
 
-            {connectWalletModal && <>
-                <ConnectWalletModal onCancel={() => { setConnectWalletModal(false) }}></ConnectWalletModal>
-            </>}
-        </>}
-    </>;
+            {connectWalletModal && (
+              <>
+                <ConnectWalletModal
+                  onCancel={() => {
+                    setConnectWalletModal(false);
+                  }}
+                ></ConnectWalletModal>
+              </>
+            )}
+          </>
+        )}
+      </>
+    );
 };
 
 export default MyNFT;

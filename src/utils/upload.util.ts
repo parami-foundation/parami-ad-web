@@ -26,3 +26,18 @@ export const compressImageFile = async (file: any, imageType: IMAGE_TYPE) => {
     return file;
   }
 };
+
+export const uploadProps = {
+  name: 'file',
+  // crossOrigin: 'anonymous',
+  headers: {
+    // authorization: 'authorization-text',
+    // origin: 'gptminer.io',
+    // 'Referrer-Policy': 'no-referrer'
+  },
+  action: 'https://ipfs.parami.io/api/v0/add?stream-channels=true',
+  withCredentials: false,
+  showUploadList: { showPreviewIcon: false },
+  multiple: false,
+  maxCount: 1,
+};

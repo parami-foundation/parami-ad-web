@@ -1,4 +1,5 @@
 import { formatBalance } from "@polkadot/util";
+// import type { BigNumber } from '@ethersproject/bignumber';
 
 export const formatAd3Amount = (amount: string) => {
   const amountWithUnit = formatBalance(amount, { withUnit: false, decimals: 18 });
@@ -24,7 +25,7 @@ export function inputFloatStringToAmount(value?: string, decimals: number = 18):
   return BigInt(intPart + floatPart.substring(0, decimals)).toString();
 }
 
-export const amountToFloatString = (value: string | bigint, decimals: number = 18): string => {
+export const amountToFloatString = (value: any, decimals: number = 18): string => {
 	let Value = value;
 	if (!Value) {
 		return '0';
@@ -84,4 +85,44 @@ export const shortenString = (str: string, maxLength: number) => {
     return beginning + ellipsis + end;
   }
   return str;
+}
+
+
+export function BigIntToFloatString(
+  value: string | bigint,
+  decimals: number
+): string {
+  let Value = value;
+  if (!Value) {
+    return '0';
+  }
+  if (typeof Value !== 'string') {
+    Value = value.toString();
+  }
+  if (Value === '0') {
+    return '0';
+  }
+  if (Value.length <= decimals) {
+    let floatPart = Value.padStart(decimals, '0');
+    const zeroIndex = floatPart.search(/([0]+)$/);
+    if (zeroIndex > -1) {
+      floatPart = floatPart.substring(0, zeroIndex);
+    }
+    if (floatPart.length > 0) {
+      floatPart = '0.' + floatPart;
+    } else {
+      floatPart = '0';
+    }
+    return floatPart;
+  }
+  const intPart = Value.substring(0, Value.length - decimals);
+  let floatPart = Value.substring(Value.length - decimals);
+  const zeroIndex = floatPart.search(/([0]+)$/);
+  if (zeroIndex > -1) {
+    floatPart = floatPart.substring(0, zeroIndex);
+  }
+  if (floatPart.length === 0) {
+    return intPart;
+  }
+  return intPart + '.' + floatPart;
 }

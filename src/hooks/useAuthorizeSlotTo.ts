@@ -2,7 +2,7 @@ import { useContractRead, useContractWrite, usePrepareContractWrite, useWaitForT
 import { EIP5489ForInfluenceMiningContractAddress } from "../models/parami";
 import EIP5489ForInfluenceMining from '../contracts/EIP5489ForInfluenceMining.json';
 
-export const useAuthorizeSlotTo = (tokenId: string, slotManagerAddress: string) => {
+export const useAuthorizeSlotTo = (tokenId: number, slotManagerAddress: string) => {
   const { data: currentSlotManager } = useContractRead<unknown[], string, string>({
     address: EIP5489ForInfluenceMiningContractAddress,
     abi: EIP5489ForInfluenceMining.abi,

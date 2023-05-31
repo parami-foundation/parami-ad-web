@@ -1,10 +1,10 @@
-import { useAccount, useContractRead } from "wagmi";
+import { useContractRead } from "wagmi";
 import { AD3ContractAddress } from "../models/parami";
 import AD3Contract from '../contracts/AD3.json';
 import { BigNumber } from "ethers";
+import { amountToFloatString } from '../utils/format.util'
 
-export const useAD3Balance = () => {
-  const { address } = useAccount();
+export const useAD3Balance = (address: string) => {
 
   const { data: nftBalance } = useContractRead<unknown[], string, BigNumber>({
     address: AD3ContractAddress,
@@ -13,5 +13,5 @@ export const useAD3Balance = () => {
     args: [address],
   });
 
-  return nftBalance;
-}
+  return amountToFloatString(nftBalance);
+};

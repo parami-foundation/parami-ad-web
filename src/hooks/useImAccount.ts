@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useAccount, useNetwork } from "wagmi";
 import { getMyIMAccount, ImAccount } from "../services/mining.service";
 import { formatTwitterImageUrl } from "../utils/format.util";
 
@@ -15,7 +14,6 @@ export const useImAccount = () => {
     setLoading(true);
     getMyIMAccount().then(imAccount => {
       if (imAccount) {
-        console.log('User imAccount:', imAccount);
         setImAccount({
           ...imAccount,
           twitterProfileImageUri: formatTwitterImageUrl(imAccount.twitterProfileImageUri),
