@@ -3,7 +3,7 @@ import { AuctionContractAddress, EIP5489ForInfluenceMiningContractAddress } from
 import AuctionContract from '../contracts/Auction.json';
 
 export const useCommitBid = (
-  tokenId: string,
+  tokenId: number,
   hnftContractAddress: string,
   bidAmount: string,
   slotUri?: string,

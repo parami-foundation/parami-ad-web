@@ -18,7 +18,7 @@ export interface BidWithSignature {
   last_bid_remain: string;
 };
 
-export const createBid = async (bidderId: string, adId: number, hnftContractAddress: string, tokenId: string, governanceTokenAmount: string) => {
+export const createBid = async (bidderId: string, adId: number, hnftContractAddress: string, tokenId: number, governanceTokenAmount: string) => {
   try {
     const data = JSON.stringify({
       bidder_id: bidderId,

@@ -294,8 +294,13 @@
                 background: rgba(255, 255, 255, 0.05);
                 border-radius: 10px;
                 height: 40px;
+                width: 120px;
                 text-align: center;
                 font-size: 24px;
+
+                input {
+                  height: 40px;
+                }
               }
             }
           }
