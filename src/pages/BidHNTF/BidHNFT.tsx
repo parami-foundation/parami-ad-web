@@ -15,26 +15,25 @@ import type { UploadFile } from 'antd/es/upload/interface';
 import { useSearchParams } from 'react-router-dom';
 import UserAvatar from '../../components/UserAvatar/UserAvatar';
 import styles from './BidHNFT.module.scss';
-import { useApproveAD3 } from '../../hooks/useApproveAD3';
+import { useHNFT } from '../../hooks/useHNFT';
+import { usePreBid } from '../../hooks/usePreBid';
+import { useCurBid } from '../../hooks/useCurrentBid';
+import { useCommitBid } from '../../hooks/useCommitBid';
+import { useImAccount } from '../../hooks/useImAccount';
 import { useAD3Balance } from '../../hooks/useAD3Balance';
+import { useApproveAD3 } from '../../hooks/useApproveAD3';
+import { useAuctionEvent } from '../../hooks/useAuctionEvent';
+import { useAuthorizeSlotTo } from '../../hooks/useAuthorizeSlotTo';
+import { BidWithSignature, createBid } from '../../services/bid.service';
+import { uploadIPFS } from '../../services/ipfs.service';
 import {
   AuctionContractAddress,
   EIP5489ForInfluenceMiningContractAddress,
 } from '../../models/parami';
 import {
   inputFloatStringToAmount,
-  BigIntToFloatString,
-  deleteComma,
+  formatAd3Amount,
 } from '../../utils/format.util';
-import { usePreBid } from '../../hooks/usePreBid';
-import { useCurBid } from '../../hooks/useCurrentBid';
-import { useAuctionEvent } from '../../hooks/useAuctionEvent';
-import { useAuthorizeSlotTo } from '../../hooks/useAuthorizeSlotTo';
-import { BidWithSignature, createBid } from '../../services/bid.service';
-import { useImAccount } from '../../hooks/useImAccount';
-import { useCommitBid } from '../../hooks/useCommitBid';
-import { uploadIPFS } from '../../services/ipfs.service';
-import { useHNFT } from '../../hooks/useHNFT';
 
 const { Panel } = Collapse;
 const { Option } = Select;
@@ -53,13 +52,13 @@ export interface UserInstruction {
   link?: string;
 }
 
-const mockAdData = {
-  icon: 'https://pbs.twimg.com/profile_images/1611305582367215616/4W9XpGpU.jpg',
-  poster: 'https://pbs.twimg.com/media/FqlTSTOWYAA7yKN?format=jpg&name=small',
-  title: 'Tweeting is Mining!',
-  tag: 'twitter',
-  url: 'https://twitter.com/ParamiProtocol',
-};
+// const mockAdData = {
+//   icon: 'https://pbs.twimg.com/profile_images/1611305582367215616/4W9XpGpU.jpg',
+//   poster: 'https://pbs.twimg.com/media/FqlTSTOWYAA7yKN?format=jpg&name=small',
+//   title: 'Tweeting is Mining!',
+//   tag: 'twitter',
+//   url: 'https://twitter.com/ParamiProtocol',
+// };
 
 // todo: get form auction.sol, current this is private
 const MIN_DEPOIST_FOR_PRE_BID = 10;
@@ -71,33 +70,37 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
   const [params] = useSearchParams();
   const tokenId = Number(params.get('tokenId') || '');
   const hnftAddress = params.get('hnftAddress') || '';
+  const hnft = useHNFT(imAccount?.wallet!);
+  const ad3Balance = useAD3Balance(imAccount?.wallet!);
 
   const [adMetadataUrl, setAdMetadataUrl] = useState<string>();
   const [iconUploadFiles, setIconUploadFiles] = useState<UploadFile[]>([]);
   const [posterUploadFiles, setPosterUploadFiles] = useState<UploadFile[]>([]);
   const [bidLoading, setBidLoading] = useState<boolean>(false);
+  const [bidWithSig, setBidWithSig] = useState<BidWithSignature>();
+  const [bidPreparedEvent, setBidPreparedEvent] = useState<any>();
 
-  const currentPrice = Number(useCurBid(hnftAddress, tokenId).amount);
+  const currentPrice = Number(
+    formatAd3Amount(useCurBid(hnftAddress, tokenId)?.amount)
+  );
   const minPrice = Math.max(currentPrice * 1.2, 1);
 
-  const hnft = useHNFT(hnftAddress);
-  const nftBalance = useAD3Balance(hnftAddress);
   const { approve, isSuccess: approveSuccess } = useApproveAD3(
     AuctionContractAddress,
     inputFloatStringToAmount('20')
   );
-  // const {
-  //   authorizeSlotTo,
-  //   isSuccess: authorizeSlotToSuccess,
-  //   currentSlotManager,
-  // } = useAuthorizeSlotTo(tokenId, AuctionContractAddress);
+  const {
+    authorizeSlotTo,
+    isSuccess: authorizeSlotToSuccess,
+    currentSlotManager,
+  } = useAuthorizeSlotTo(tokenId, AuctionContractAddress);
   const {
     preBid,
     isSuccess: preBidSuccess,
     prepareError: preBidPrepareError,
   } = usePreBid(hnftAddress, tokenId);
-  // const preBidReady = !!preBid;
-  const [bidPreparedEvent, setBidPreparedEvent] = useState<any>();
+  const preBidReady = !!preBid;
+
   const { unwatch } = useAuctionEvent(
     'BidPrepared',
     (
@@ -106,7 +109,6 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
       preBidId: string,
       bidder: string
     ) => {
-      console.log(bidder, curBidId, '---curBidId----');
       setBidPreparedEvent({
         bidder,
         curBidId,
@@ -114,7 +116,6 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
       });
     }
   );
-  const [bidWithSig, setBidWithSig] = useState<BidWithSignature>();
   const { commitBid, isSuccess: commitBidSuccess } = useCommitBid(
     tokenId,
     hnftAddress,
@@ -141,15 +142,23 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
   // }, [authorizeSlotToSuccess, preBid]);
 
   useEffect(() => {
-    if (approveSuccess) {
-      console.log('bid: pre bid direct');
-      preBid?.();
+    if (approveSuccess && preBidReady) {
+      if (
+        currentSlotManager &&
+        currentSlotManager.toLowerCase() ===
+          AuctionContractAddress.toLowerCase()
+      ) {
+        console.log('bid: pre bid direct');
+        preBid?.();
+      } else {
+        authorizeSlotTo?.();
+      }
     }
-  }, [approveSuccess, preBid]);
-
+  }, [approveSuccess, preBidReady, currentSlotManager]);
 
   useEffect(() => {
     if (bidPreparedEvent && bidPreparedEvent.bidder) {
+      const bid_price = form.getFieldValue('bid_price');
       // todo: create adMeta
       console.log('bid prepare event done. create bid now...');
       createBid(
@@ -157,7 +166,7 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
         1,
         EIP5489ForInfluenceMiningContractAddress,
         tokenId,
-        inputFloatStringToAmount('10')
+        inputFloatStringToAmount(String(bid_price))
       ).then((bidWithSig) => {
         console.log('create bid got sig', bidWithSig);
         setBidWithSig(bidWithSig);
@@ -167,10 +176,9 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
 
   useEffect(() => {
     if (bidWithSig && commitBidReady) {
-      console.log(33333);
       commitBid?.();
     }
-  }, [bidWithSig, commitBid, commitBidReady]);
+  }, [bidWithSig, commitBidReady]);
 
   // useEffect(() => {
   //   if (preBidPrepareError) {
@@ -190,10 +198,10 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
     form.validateFields().then(async (values: any) => {
       setBidLoading(true);
       const { bid_price } = values;
-      uploadIPFS(mockAdData).then((res) => {
+      uploadIPFS(values).then((res) => {
         console.log('upload ipfs res', res);
         // success && blance >= approve amount = min_deposite_amount + new_bid_price
-        if (res && Number(nftBalance) > MIN_DEPOIST_FOR_PRE_BID + bid_price) {
+        if (res && Number(ad3Balance) > MIN_DEPOIST_FOR_PRE_BID + bid_price) {
           approve?.();
         }
         setAdMetadataUrl(`https://ipfs.parami.io/ipfs/${res.Hash}`);
