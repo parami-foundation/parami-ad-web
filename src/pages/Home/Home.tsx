@@ -1,24 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Layout, notification } from 'antd';
+import React, { useEffect } from 'react';
+import { Layout, notification } from 'antd';
 import './Home.scss';
 import HomePageHeader from '../../components/HomePageHeader/HomePageHeader';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { parseUrlParams } from '../../utils/window.util';
 import { createAccountOrLogin } from '../../services/mining.service';
 import MyNFT from '../../components/MyNFT/MyNFT';
-import { Footer } from 'antd/es/layout/layout';
-import TweetGeneratorModal from '../../components/TweetGeneratorModal/TweetGeneratorModal';
-import { isMobile } from 'react-device-detect';
-import { OFFICIAL_TAG } from '../../models/parami';
 
 const { Content } = Layout;
 
 export interface HomeProps { }
 
 function Home({ }: HomeProps) {
-    const location = useLocation();
-    const navigate = useNavigate();
-    const [generateTweetModal, setGenerateTweetModal] = useState<boolean>(false);
 
     useEffect(() => {
         const params = parseUrlParams() as { code: string, state: string };
@@ -84,12 +77,6 @@ function Home({ }: HomeProps) {
                 </div>
             </Footer> */}
         </Layout>
-
-        {generateTweetModal && <>
-            <TweetGeneratorModal onCancel={() => {
-                setGenerateTweetModal(false);
-            }}></TweetGeneratorModal>
-        </>}
     </>;
 };
 

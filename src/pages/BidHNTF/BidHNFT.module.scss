@@ -423,6 +423,8 @@
       .ad-footer {
         margin-top: 60px;
         padding: 20px 0;
+        margin-bottom: 40px;
+        font-size: 14px;
 
         .title {
           padding-bottom: 20px;
@@ -436,6 +438,44 @@
         .bid-nfts {
           padding: 0 20px;
           // height: 44px;
+
+          .bid-nfts-content {
+
+            &-header {
+
+              >* {
+                padding: 8px;
+                font-size: 14px;
+              }
+            }
+
+            &-body {
+              &-item:last-child {
+                .ant-form-item {
+                  margin: 0;
+                  display: flex;
+                  align-items: center;
+
+                }
+              }
+
+              >* {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 12px 8px;
+                line-height: normal;
+                .bid-nfts-body-input {
+                  width: 80px;
+
+                  input {
+                    height: 40px;
+                    font-size: 14px;
+                  }
+                }
+              }
+            }
+          }
 
           &-input {
             height: 44px;

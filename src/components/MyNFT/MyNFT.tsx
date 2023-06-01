@@ -1,11 +1,9 @@
-import { notification } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAccount, useNetwork } from 'wagmi';
 import { useHNFT } from '../../hooks/useHNFT';
 import { useImAccount } from '../../hooks/useImAccount';
-import BillboardNftImage from '../BillboardNftImage/BillboardNftImage';
 import ConnectWalletModal from '../ConnectWalletModal/ConnectWalletModal';
 import './MyNFT.scss';
 import { accountBindWallet } from '../../services/mining.service';
@@ -82,38 +80,6 @@ function MyNFT({ }: MyNFTProps) {
                           {isMobile ? 'Mint HNFT' : 'Mint My HNFT'}
                         </span>
                       </div>
-                    </>
-                  )}
-
-                  {!!hnft.balance && imAccount && (
-                    <>
-                      <div className='nft-container'>
-                        <BillboardNftImage
-                          imageUrl={imAccount.twitterProfileImageUri}
-                          level={Number(hnft.level)}
-                          showTag={!isMobile}
-                        ></BillboardNftImage>
-                      </div>
-
-                      {!isMobile && (
-                        <>
-                          {hnft.levelName === 'Legendary' && (
-                            <div className='action-btn-primary active'>
-                              Already superlativ
-                            </div>
-                          )}
-                          {hnft.levelName !== 'Legendary' && (
-                            <div
-                              className='action-btn-primary active'
-                              onClick={() => {
-                                navigate('/mint');
-                              }}
-                            >
-                              Upgrade HNFT
-                            </div>
-                          )}
-                        </>
-                      )}
                     </>
                   )}
                 </>

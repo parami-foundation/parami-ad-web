@@ -12,7 +12,6 @@ import { Routes, Route, HashRouter, Navigate } from "react-router-dom";
 import { ConfigProvider } from 'antd';
 import { ApiPromise } from '@polkadot/api';
 import Home from './pages/Home/Home';
-import Landing from './pages/Landing/Landing';
 import BidHNFT from './pages/BidHNTF/BidHNFT';
 import { MetaMaskConnector } from 'wagmi/connectors/metaMask';
 import './fonts/Gilroy-Bold.ttf';
@@ -58,7 +57,6 @@ root.render(
         <HashRouter>
           <Routes>
             <Route path='/' element={<Home />}>
-              <Route path="/" element={<Landing />} />
               <Route path='/bid' element={<BidHNFT />} />
               <Route path='*' element={<Navigate to='/' />} />
             </Route>

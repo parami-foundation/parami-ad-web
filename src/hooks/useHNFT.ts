@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useAccount, useContractRead } from "wagmi";
 import { BillboardLevel2MiningPower, BillboardLevel2Name, EIP5489ForInfluenceMiningContractAddress } from "../models/parami";
 import EIP5489ForInfluenceMining from '../contracts/EIP5489ForInfluenceMining.json';
