@@ -84,10 +84,11 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
     formatAd3Amount(useCurBid(hnftAddress, tokenId)?.amount)
   );
   const minPrice = Math.max(currentPrice * 1.2, 1);
+  const bid_price = form.getFieldValue('bid_price') ?? 0;
 
   const { approve, isSuccess: approveSuccess } = useApproveAD3(
     AuctionContractAddress,
-    inputFloatStringToAmount('20')
+    inputFloatStringToAmount(String(MIN_DEPOIST_FOR_PRE_BID + bid_price))
   );
   const {
     authorizeSlotTo,
@@ -119,7 +120,7 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
   const { commitBid, isSuccess: commitBidSuccess } = useCommitBid(
     tokenId,
     hnftAddress,
-    inputFloatStringToAmount('10'),
+    inputFloatStringToAmount(String(bid_price)),
     adMetadataUrl,
     bidWithSig?.sig,
     bidWithSig?.prev_bid_id,
@@ -157,6 +158,12 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
   }, [approveSuccess, preBidReady, currentSlotManager]);
 
   useEffect(() => {
+    if (preBidPrepareError) {
+      console.log('prebid prepare error', preBidPrepareError);
+    }
+  }, [preBidPrepareError]);
+
+  useEffect(() => {
     if (bidPreparedEvent && bidPreparedEvent.bidder) {
       const bid_price = form.getFieldValue('bid_price');
       // todo: create adMeta
@@ -180,12 +187,6 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
     }
   }, [bidWithSig, commitBidReady]);
 
-  // useEffect(() => {
-  //   if (preBidPrepareError) {
-  //     console.log('prebid prepare error', preBidPrepareError);
-  //   }
-  // }, [preBidPrepareError]);
-
   useEffect(() => {
     if (commitBidSuccess) {
       // todo: refresh and clear state
@@ -201,7 +202,7 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
       uploadIPFS(values).then((res) => {
         console.log('upload ipfs res', res);
         // success && blance >= approve amount = min_deposite_amount + new_bid_price
-        if (res && Number(ad3Balance) > MIN_DEPOIST_FOR_PRE_BID + bid_price) {
+        if (res && Number(ad3Balance) >= MIN_DEPOIST_FOR_PRE_BID + bid_price) {
           approve?.();
         }
         setAdMetadataUrl(`https://ipfs.parami.io/ipfs/${res.Hash}`);
@@ -227,7 +228,6 @@ const BidHNFT: React.FC<BidHNFTProps> = (props) => {
       if (info.file.status === 'error') {
         message.error('Upload Image Error');
       }
-      console.log('upload done', fileList);
       imageType === IMAGE_TYPE.POSTER
         ? setPosterUploadFiles(fileList)
         : setIconUploadFiles(fileList);
