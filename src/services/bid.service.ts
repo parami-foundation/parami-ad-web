@@ -1,4 +1,4 @@
-import { AuctionContractAddress, PARAMI_AIRDROP } from "../models/parami";
+import { PARAMI_AIRDROP } from "../models/parami";
 import { fetchWithCredentials } from "../utils/api.util";
 
 export interface BidWithSignature {
